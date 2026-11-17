@@ -9,6 +9,7 @@ import {
   PackageCheck,
   RotateCcw,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useRestaurant } from '../context/RestaurantContext';
 import { RESTAURANT_INFO } from '../data/menuData';
 import { generateOrderTrackingWhatsAppLink } from '../utils/whatsapp';
@@ -56,24 +57,28 @@ export const OrderTrackerModal: React.FC = () => {
   const steps = [
     {
       step: 1,
+      shortTitle: 'Confirmed',
       title: 'Order Confirmed',
       desc: 'Order received and verified by kitchen staff',
       icon: CheckCircle2,
     },
     {
       step: 2,
-      title: 'In The Kitchen',
-      desc: 'Frying crispy pakoras, grilling kababs, and prepping orders',
+      shortTitle: 'Cooking',
+      title: 'Cooking',
+      desc: 'Baking pizzas, frying crispy pakoras, and prepping fresh rolls',
       icon: ChefHat,
     },
     {
       step: 3,
-      title: 'Out For Delivery',
+      shortTitle: 'Out for Delivery',
+      title: 'Out for Delivery',
       desc: 'Rider is on the way in a thermal insulated bag',
       icon: Bike,
     },
     {
       step: 4,
+      shortTitle: 'Delivered',
       title: 'Delivered',
       desc: 'Arrived at your doorstep. Enjoy your meal!',
       icon: PackageCheck,
@@ -81,6 +86,7 @@ export const OrderTrackerModal: React.FC = () => {
   ];
 
   const currentStep = currentOrder ? getStepProgress(currentOrder.status) : 1;
+  const progressPercent = (currentStep / steps.length) * 100;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
@@ -254,6 +260,58 @@ export const OrderTrackerModal: React.FC = () => {
                 )}
               </div>
 
+              {/* Animated Stage Progress Bar (Framer Motion) */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#191d2a] border border-slate-200 dark:border-white/10 space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Live Order Progress
+                  </span>
+                  <span className="font-black text-amber-600 dark:text-amber-400 tabular-nums">
+                    Stage {currentStep} of {steps.length} ({progressPercent}%)
+                  </span>
+                </div>
+
+                {/* Horizontal Animated Progress Track */}
+                <div className="relative w-full h-3 rounded-full bg-slate-200 dark:bg-black/50 overflow-hidden p-0.5">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progressPercent}%` }}
+                    transition={{ type: 'spring', stiffness: 110, damping: 20 }}
+                    className="h-full rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-emerald-400 shadow-[0_0_12px_rgba(251,191,36,0.6)]"
+                  />
+                </div>
+
+                {/* Milestone Badges */}
+                <div className="grid grid-cols-4 gap-1.5 pt-1">
+                  {steps.map((st) => {
+                    const isCompleted = currentStep >= st.step;
+                    const isCurrent = currentStep === st.step;
+                    const IconComponent = st.icon;
+                    return (
+                      <motion.div
+                        key={`pill-${st.step}`}
+                        animate={{
+                          scale: isCurrent ? 1.04 : 1,
+                        }}
+                        transition={{ type: 'spring', stiffness: 250, damping: 18 }}
+                        className={`flex flex-col items-center text-center p-1.5 rounded-xl border transition-colors ${
+                          isCurrent
+                            ? 'bg-amber-400/15 border-amber-400 text-amber-700 dark:text-amber-300'
+                            : isCompleted
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                            : 'bg-white/60 dark:bg-white/5 border-transparent text-slate-400'
+                        }`}
+                      >
+                        <IconComponent className="w-3.5 h-3.5 mb-0.5" />
+                        <span className="text-[10px] font-bold leading-tight">
+                          {st.shortTitle}
+                        </span>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Step Progression Timeline */}
               <div className="space-y-4">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -267,9 +325,22 @@ export const OrderTrackerModal: React.FC = () => {
                     const IconComponent = st.icon;
 
                     return (
-                      <div key={st.step} className="relative flex items-start gap-4">
+                      <motion.div
+                        key={st.step}
+                        initial={{ opacity: 0.7, x: -4 }}
+                        animate={{ opacity: isCompleted ? 1 : 0.65, x: 0 }}
+                        transition={{ duration: 0.35 }}
+                        className="relative flex items-start gap-4"
+                      >
                         {/* Step Marker */}
-                        <div
+                        <motion.div
+                          animate={{
+                            scale: isCurrent ? [1, 1.15, 1] : 1,
+                          }}
+                          transition={{
+                            duration: 1.5,
+                            repeat: isCurrent && currentOrder.status !== 'delivered' ? Infinity : 0,
+                          }}
                           className={`absolute -left-6 flex items-center justify-center w-5.5 h-5.5 rounded-full transition-colors ${
                             isCompleted
                               ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20'
@@ -277,7 +348,7 @@ export const OrderTrackerModal: React.FC = () => {
                           }`}
                         >
                           <IconComponent className="w-3.5 h-3.5" />
-                        </div>
+                        </motion.div>
 
                         {/* Step Label */}
                         <div className="flex-1">
@@ -299,7 +370,7 @@ export const OrderTrackerModal: React.FC = () => {
                             </span>
                           )}
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>

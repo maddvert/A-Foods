@@ -3,6 +3,8 @@ import { Flame, Clock, ShieldCheck, Banknote, ArrowRight, Sparkles, MapPin } fro
 import { RESTAURANT_INFO } from '../data/menuData';
 import { useRestaurant } from '../context/RestaurantContext';
 import { generateGeneralWhatsAppInquiryLink } from '../utils/whatsapp';
+import { FOOD_IMAGES } from '../assets/images';
+import { ImageWithSkeleton } from './ImageWithSkeleton';
 
 export const HeroSection: React.FC = () => {
   const { deliveryLocation, setIsLocationModalOpen } = useRestaurant();
@@ -121,11 +123,12 @@ export const HeroSection: React.FC = () => {
           {/* Right Column: Hero Visual Showcase (5 cols) with Upward Slide Animation */}
           <div className="lg:col-span-5 relative animate-in fade-in slide-in-from-bottom-8 duration-900">
             <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-white/15 shadow-2xl shadow-black/30 group">
-              <img
-                src="/src/assets/images/hero_feast_spread_1794312533443.jpg"
+              <ImageWithSkeleton
+                src={FOOD_IMAGES.heroFeastSpread}
                 alt="A. FOODS Signature Counter Delicacies Spread"
-                referrerPolicy="no-referrer"
-                className="w-full h-[360px] sm:h-[440px] lg:h-[480px] object-cover group-hover:scale-104 transition-transform duration-700 ease-out"
+                loading="lazy"
+                wrapperClassName="w-full h-[360px] sm:h-[440px] lg:h-[480px]"
+                className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-700 ease-out"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
 

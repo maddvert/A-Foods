@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRestaurant } from '../context/RestaurantContext';
+import { resolveFoodImage } from '../assets/images';
 
 export const FlyToCartOverlay: React.FC = () => {
   const { flyingItem, cartIconRef } = useRestaurant();
@@ -72,7 +73,7 @@ export const FlyToCartOverlay: React.FC = () => {
       className="w-16 h-16 rounded-full overflow-hidden shadow-2xl ring-4 ring-amber-400 bg-black flex items-center justify-center pointer-events-none"
     >
       <img
-        src={coords.imageUrl}
+        src={resolveFoodImage(coords.imageUrl)}
         alt="Adding to Cart"
         className="w-full h-full object-cover rounded-full"
       />

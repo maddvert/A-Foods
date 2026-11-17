@@ -14,11 +14,16 @@ import {
   ShoppingBag,
   MapPin,
   ChevronRight,
+  Mic,
+  MicOff,
+  Sparkles,
 } from 'lucide-react';
 import { useRestaurant } from '../context/RestaurantContext';
-import { RESTAURANT_INFO } from '../data/menuData';
-import { CustomerDetails, Order } from '../types/restaurant';
+import { MENU_ITEMS, RESTAURANT_INFO } from '../data/menuData';
+import { CustomerDetails } from '../types/restaurant';
 import { generateWhatsAppOrderLink } from '../utils/whatsapp';
+import { useVoiceInput } from '../hooks/useVoiceInput';
+import { ImageWithSkeleton } from './ImageWithSkeleton';
 
 export const CartDrawer: React.FC = () => {
   const {
@@ -37,7 +42,11 @@ export const CartDrawer: React.FC = () => {
     deliveryLocation,
     setIsLocationModalOpen,
     currentUser,
+    addToCart,
   } = useRestaurant();
+
+  const [voiceOrderFeedback, setVoiceOrderFeedback] = useState<string | null>(null);
+  const [lastSpokenText, setLastSpokenText] = useState<string>('');
 
   const [step, setStep] = useState<'cart' | 'checkout'>('cart');
   const [paymentMethod, setPaymentMethod] = useState<'cash_on_delivery' | 'online_transfer'>('cash_on_delivery');
@@ -52,6 +61,131 @@ export const CartDrawer: React.FC = () => {
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Hands-free voice order parser: splits clauses by "and"/comma, extracts quantity + best matching dish
+  const handleVoiceCartTranscript = React.useCallback(
+    (transcript: string, isFinal: boolean) => {
+      setLastSpokenText(transcript);
+      if (!isFinal) return;
+
+      const wordQtyMap: Record<string, number> = {
+        one: 1,
+        two: 2,
+        three: 3,
+        four: 4,
+        five: 5,
+        six: 6,
+      };
+
+      const clauses = transcript
+        .toLowerCase()
+        .split(/\b(?:and|plus|with)\b|,/i)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const addedNames: string[] = [];
+
+      clauses.forEach((clause) => {
+        const digitMatch = clause.match(/\b(\d+)\b/);
+        let qty = digitMatch ? Math.min(10, Math.max(1, parseInt(digitMatch[1], 10))) : 1;
+        if (!digitMatch) {
+          for (const [word, val] of Object.entries(wordQtyMap)) {
+            if (new RegExp(`\\b${word}\\b`, 'i').test(clause)) {
+              qty = val;
+              break;
+            }
+          }
+        }
+
+        const cleanedClause = clause
+          .replace(/\b(add|order|please|want|get|give|me|one|two|three|four|five|six|\d+)\b/gi, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        const tokens = cleanedClause.split(' ').filter((t) => t.length >= 3);
+        if (tokens.length === 0) return;
+
+        let bestMatch = MENU_ITEMS[0];
+        let bestScore = 0;
+
+        for (const item of MENU_ITEMS) {
+          const haystack = `${item.name} ${item.category}`.toLowerCase();
+          let score = 0;
+          for (const token of tokens) {
+            const singular = token.endsWith('s') ? token.slice(0, -1) : token;
+            if (haystack.includes(token) || haystack.includes(singular)) {
+              score += 1;
+            }
+          }
+          if (score > bestScore) {
+            bestScore = score;
+            bestMatch = item;
+          }
+        }
+
+        if (bestScore > 0) {
+          addToCart({
+            cartItemId: `voice-${bestMatch.id}-${Date.now()}-${Math.random()
+              .toString(36)
+              .substring(2, 5)}`,
+            menuItemId: bestMatch.id,
+            name: bestMatch.name,
+            basePrice: bestMatch.basePrice,
+            unitPrice: bestMatch.basePrice,
+            quantity: qty,
+            itemTotal: bestMatch.basePrice * qty,
+            selectedAddOns: [],
+            image: bestMatch.image,
+          });
+          addedNames.push(`${qty}x ${bestMatch.name}`);
+        }
+      });
+
+      if (addedNames.length > 0) {
+        setVoiceOrderFeedback(`Added to cart: ${addedNames.join(', ')}`);
+      } else {
+        setVoiceOrderFeedback(
+          `Heard "${transcript}" — try saying e.g. "2 Chicken Cheese Roll" or "1 Tikka Pizza".`
+        );
+      }
+    },
+    [addToCart]
+  );
+
+  const {
+    isSupported: isVoiceSupported,
+    isListening: isVoiceOrderListening,
+    error: voiceOrderError,
+    toggleListening: toggleVoiceOrder,
+  } = useVoiceInput({ onTranscript: handleVoiceCartTranscript });
+
+  const handleAddressVoiceTranscript = React.useCallback((text: string, isFinal: boolean) => {
+    if (isFinal) {
+      setCustomer((prev) => ({
+        ...prev,
+        address: prev.address ? `${prev.address.trim()}, ${text}` : text,
+      }));
+    }
+  }, []);
+
+  const {
+    isListening: isAddressListening,
+    toggleListening: toggleAddressVoice,
+  } = useVoiceInput({ onTranscript: handleAddressVoiceTranscript });
+
+  const handleNotesVoiceTranscript = React.useCallback((text: string, isFinal: boolean) => {
+    if (isFinal) {
+      setCustomer((prev) => ({
+        ...prev,
+        notes: prev.notes ? `${prev.notes.trim()} ${text}` : text,
+      }));
+    }
+  }, []);
+
+  const {
+    isListening: isNotesListening,
+    toggleListening: toggleNotesVoice,
+  } = useVoiceInput({ onTranscript: handleNotesVoiceTranscript });
 
   if (!isCartOpen) return null;
 
@@ -172,14 +306,68 @@ export const CartDrawer: React.FC = () => {
 
           {/* Drawer Content */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+            {/* Hands-Free Voice Order Bar (Web Speech API) */}
+            {step === 'cart' && isVoiceSupported && (
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">
+                        Hands-Free Voice Order
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                        Say e.g. "Add 2 Chicken Cheese Roll and 1 Supreme Pizza"
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={toggleVoiceOrder}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer shrink-0 ${
+                      isVoiceOrderListening
+                        ? 'bg-red-500 text-white animate-pulse shadow-sm'
+                        : 'bg-amber-400 hover:bg-amber-300 text-black'
+                    }`}
+                  >
+                    {isVoiceOrderListening ? (
+                      <>
+                        <MicOff className="w-3.5 h-3.5" />
+                        <span>Listening...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="w-3.5 h-3.5" />
+                        <span>Speak Order</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {lastSpokenText && isVoiceOrderListening && (
+                  <p className="text-[11px] italic text-amber-700 dark:text-amber-300">
+                    Hearing: "{lastSpokenText}"
+                  </p>
+                )}
+                {voiceOrderFeedback && (
+                  <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                    {voiceOrderFeedback}
+                  </p>
+                )}
+                {voiceOrderError && (
+                  <p className="text-[11px] text-red-500">{voiceOrderError}</p>
+                )}
+              </div>
+            )}
+
             {cart.length === 0 ? (
-              <div className="text-center py-16 space-y-3">
+              <div className="text-center py-14 space-y-3">
                 <div className="w-16 h-16 mx-auto rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
                   <ShoppingBag className="w-8 h-8" />
                 </div>
                 <h3 className="text-base font-bold">Your cart is empty</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
-                  Add crispy pakoras, samosas, chicken cheese rolls, or chaat from our delicious menu.
+                  Add crispy pakoras, samosas, chicken cheese rolls, or chaat from our delicious menu, or use voice ordering above.
                 </p>
                 <button
                   onClick={() => setIsCartOpen(false)}
@@ -197,10 +385,12 @@ export const CartDrawer: React.FC = () => {
                       key={item.cartItemId}
                       className="p-3.5 bg-slate-50 dark:bg-[#181b26] border border-slate-200 dark:border-white/10 rounded-xl flex gap-3 relative group"
                     >
-                      <img
+                      <ImageWithSkeleton
                         src={item.image}
                         alt={item.name}
-                        className="w-16 h-16 object-cover rounded-lg shrink-0 bg-slate-200 dark:bg-[#222736]"
+                        loading="lazy"
+                        wrapperClassName="w-16 h-16 rounded-lg shrink-0 bg-slate-200 dark:bg-[#222736]"
+                        className="w-full h-full object-cover"
                       />
 
                       <div className="flex-1 min-w-0 space-y-1">
@@ -335,17 +525,34 @@ export const CartDrawer: React.FC = () => {
                 {orderType === 'delivery' && (
                   <>
                     <div className="space-y-1">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <label className="block text-slate-700 dark:text-slate-300 font-bold">
                           Delivery Street Address <span className="text-red-500">*</span>
                         </label>
-                        <button
-                          type="button"
-                          onClick={() => setIsLocationModalOpen(true)}
-                          className="text-amber-600 dark:text-amber-400 text-[11px] hover:underline cursor-pointer"
-                        >
-                          Change Area ({deliveryLocation.name})
-                        </button>
+                        <div className="flex items-center gap-2">
+                          {isVoiceSupported && (
+                            <button
+                              type="button"
+                              onClick={toggleAddressVoice}
+                              title="Dictate street address by voice"
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer ${
+                                isAddressListening
+                                  ? 'bg-red-500 text-white animate-pulse'
+                                  : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25'
+                              }`}
+                            >
+                              {isAddressListening ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+                              <span>{isAddressListening ? 'Stop' : 'Speak'}</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setIsLocationModalOpen(true)}
+                            className="text-amber-600 dark:text-amber-400 text-[11px] hover:underline cursor-pointer"
+                          >
+                            Change Area ({deliveryLocation.name})
+                          </button>
+                        </div>
                       </div>
                       <textarea
                         rows={2}
@@ -375,9 +582,26 @@ export const CartDrawer: React.FC = () => {
                 )}
 
                 <div className="space-y-1">
-                  <label className="block text-slate-700 dark:text-slate-300 font-bold">
-                    Delivery Instructions (Optional)
-                  </label>
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="block text-slate-700 dark:text-slate-300 font-bold">
+                      Delivery Instructions (Optional)
+                    </label>
+                    {isVoiceSupported && (
+                      <button
+                        type="button"
+                        onClick={toggleNotesVoice}
+                        title="Dictate delivery notes by voice"
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer ${
+                          isNotesListening
+                            ? 'bg-red-500 text-white animate-pulse'
+                            : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25'
+                        }`}
+                      >
+                        {isNotesListening ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+                        <span>{isNotesListening ? 'Stop' : 'Speak'}</span>
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="text"
                     value={customer.notes}

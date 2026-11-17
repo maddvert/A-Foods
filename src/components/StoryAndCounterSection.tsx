@@ -2,6 +2,8 @@ import React from 'react';
 import { Award, CheckCircle, Clock, UtensilsCrossed, ShieldAlert } from 'lucide-react';
 import { RESTAURANT_INFO } from '../data/menuData';
 import { generateGeneralWhatsAppInquiryLink } from '../utils/whatsapp';
+import { FOOD_IMAGES } from '../assets/images';
+import { ImageWithSkeleton } from './ImageWithSkeleton';
 
 export const StoryAndCounterSection: React.FC = () => {
   return (
@@ -11,11 +13,12 @@ export const StoryAndCounterSection: React.FC = () => {
           {/* Left Column: Commercial Culinary Showcase Image (replacing reference photo) */}
           <div className="lg:col-span-6 relative animate-in fade-in slide-in-from-bottom-6 duration-700">
             <div className="relative rounded-2xl overflow-hidden border-2 border-amber-500/30 shadow-2xl shadow-black/20 dark:shadow-black/70 group">
-              <img
-                src="/src/assets/images/menu_samosas_chapli_1794313770709.jpg"
+              <ImageWithSkeleton
+                src={FOOD_IMAGES.menuSamosasChapli}
                 alt="A. FOODS Handcrafted Samosas, Chapli Kababs and Crispy Specialties"
-                referrerPolicy="no-referrer"
-                className="w-full h-[400px] sm:h-[480px] object-cover group-hover:scale-103 transition-transform duration-500"
+                loading="lazy"
+                wrapperClassName="w-full h-[400px] sm:h-[480px]"
+                className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
 

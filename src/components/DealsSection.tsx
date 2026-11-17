@@ -2,6 +2,7 @@ import React from 'react';
 import { Sparkles, Plus } from 'lucide-react';
 import { MENU_ITEMS } from '../data/menuData';
 import { useRestaurant } from '../context/RestaurantContext';
+import { ImageWithSkeleton } from './ImageWithSkeleton';
 
 export const DealsSection: React.FC = () => {
   const { addToCart, setIsCartOpen } = useRestaurant();
@@ -65,9 +66,11 @@ export const DealsSection: React.FC = () => {
 
               <div className="space-y-4">
                 <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-100 dark:bg-[#202535]">
-                  <img
+                  <ImageWithSkeleton
                     src={deal.image}
                     alt={deal.name}
+                    loading="lazy"
+                    wrapperClassName="w-full h-full"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />

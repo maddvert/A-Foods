@@ -26,6 +26,7 @@ import {
   STORAGE_ORDERS_KEY,
 } from '../context/RestaurantContext';
 import { Order, OrderStatus } from '../types/restaurant';
+import { ImageWithSkeleton } from './ImageWithSkeleton';
 
 const STATUS_META: Record<
   OrderStatus,
@@ -576,10 +577,12 @@ export const CustomerDashboardModal: React.FC = () => {
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
                                 {item.image && (
-                                  <img
+                                  <ImageWithSkeleton
                                     src={item.image}
                                     alt={item.name}
-                                    className="w-9 h-9 rounded-lg object-cover shrink-0 bg-slate-200 dark:bg-[#242938]"
+                                    loading="lazy"
+                                    wrapperClassName="w-9 h-9 rounded-lg shrink-0 bg-slate-200 dark:bg-[#242938]"
+                                    className="w-full h-full object-cover"
                                   />
                                 )}
                                 <div className="min-w-0">

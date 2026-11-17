@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Sparkles, Flame } from 'lucide-react';
+import { FOOD_IMAGES } from '../assets/images';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -37,7 +38,7 @@ const FLYING_FOOD_ITEMS: FlyingFoodParticle[] = [
   {
     id: 1,
     type: 'image',
-    src: '/src/assets/images/menu_supreme_pizza_1794312536282.jpg',
+    src: FOOD_IMAGES.menuSupremePizza,
     label: 'Pizza',
     startX: 0,
     startY: 0,
@@ -52,7 +53,7 @@ const FLYING_FOOD_ITEMS: FlyingFoodParticle[] = [
   {
     id: 2,
     type: 'image',
-    src: '/src/assets/images/menu_chicken_cheese_roll_1794396329122.jpg',
+    src: FOOD_IMAGES.menuChickenCheeseRoll,
     label: 'Cheese Roll',
     startX: 0,
     startY: 0,
@@ -67,7 +68,7 @@ const FLYING_FOOD_ITEMS: FlyingFoodParticle[] = [
   {
     id: 3,
     type: 'image',
-    src: '/src/assets/images/menu_gol_gappay_1794313770478.jpg',
+    src: FOOD_IMAGES.menuGolGappay,
     label: 'Gol Gappay',
     startX: 0,
     startY: 0,
@@ -82,7 +83,7 @@ const FLYING_FOOD_ITEMS: FlyingFoodParticle[] = [
   {
     id: 4,
     type: 'image',
-    src: '/src/assets/images/menu_samosas_chapli_1794313770709.jpg',
+    src: FOOD_IMAGES.menuSamosasChapli,
     label: 'Samosa & Kabab',
     startX: 0,
     startY: 0,

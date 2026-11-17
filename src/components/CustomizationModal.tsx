@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Minus, Check } from 'lucide-react';
 import { useRestaurant } from '../context/RestaurantContext';
 import { AddOnOption } from '../types/restaurant';
+import { ImageWithSkeleton } from './ImageWithSkeleton';
 
 export const CustomizationModal: React.FC = () => {
   const { customizingItem, setCustomizingItem, addToCart, setIsCartOpen } = useRestaurant();
@@ -84,10 +85,11 @@ export const CustomizationModal: React.FC = () => {
       >
         {/* Modal Header */}
         <div className="relative h-44 sm:h-52 w-full overflow-hidden shrink-0">
-          <img
+          <ImageWithSkeleton
             src={item.image}
             alt={item.name}
-            referrerPolicy="no-referrer"
+            loading="lazy"
+            wrapperClassName="w-full h-full"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent pointer-events-none" />

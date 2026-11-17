@@ -22,6 +22,7 @@ import { FlyToCartOverlay } from './components/FlyToCartOverlay';
 import { FloatingWhatsAppButton } from './components/FloatingWhatsAppButton';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { SplashScreen } from './components/SplashScreen';
+import { PromoBanner } from './components/PromoBanner';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -33,6 +34,9 @@ export default function App() {
       </AnimatePresence>
 
       <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0e1015] text-slate-900 dark:text-[#f3f4f6] flex flex-col font-sans selection:bg-amber-400 selection:text-black transition-colors duration-200 overflow-x-hidden w-full max-w-full">
+        {/* Dismissible Promotional Deals Banner */}
+        <PromoBanner />
+
         {/* Navigation Bar */}
         <Navbar />
 
@@ -64,7 +68,7 @@ export default function App() {
         <CartDrawer />
         <OrderTrackerModal />
         <FlyToCartOverlay />
-        <FloatingWhatsAppButton />
+        <FloatingWhatsAppButton autoExpandWaitTimeTooltip />
         <MobileBottomNav />
       </div>
     </RestaurantProvider>

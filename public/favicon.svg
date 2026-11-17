@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="afGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="50%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#0b0d13" />
+  <rect x="7" y="7" width="114" height="114" rx="22" fill="url(#afGold)" />
+  <text
+    x="64"
+    y="86"
+    text-anchor="middle"
+    font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
+    font-weight="900"
+    font-size="68"
+    fill="#0b0d13"
+    letter-spacing="-2"
+  >A.</text>
+</svg>

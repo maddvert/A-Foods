@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { Search, Plus, SlidersHorizontal, Flame, Check } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Search, Plus, SlidersHorizontal, Flame, Check, Mic, MicOff } from 'lucide-react';
 import { MENU_ITEMS } from '../data/menuData';
 import { FoodCategory, MenuItem } from '../types/restaurant';
 import { useRestaurant } from '../context/RestaurantContext';
+import { ImageWithSkeleton } from './ImageWithSkeleton';
+import { useVoiceInput } from '../hooks/useVoiceInput';
 
 const CATEGORIES: { id: FoodCategory; label: string; icon: string }[] = [
   { id: 'all', label: 'All Items', icon: '🍽️' },
@@ -27,6 +29,20 @@ export const MenuSection: React.FC = () => {
   } = useRestaurant();
 
   const [addedItemEffect, setAddedItemEffect] = useState<string | null>(null);
+
+  const handleVoiceSearchTranscript = useCallback(
+    (text: string) => {
+      setSearchQuery(text);
+    },
+    [setSearchQuery]
+  );
+
+  const {
+    isSupported: isVoiceSupported,
+    isListening: isVoiceListening,
+    error: voiceError,
+    toggleListening: toggleVoiceSearch,
+  } = useVoiceInput({ onTranscript: handleVoiceSearchTranscript });
 
   const filteredItems = MENU_ITEMS.filter((item) => {
     const matchesCategory =
@@ -92,23 +108,54 @@ export const MenuSection: React.FC = () => {
             </p>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search pizza, pakoras, rolls, gol gappay..."
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-[#171a23] border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white"
-              >
-                Clear
-              </button>
+          {/* Search Bar with Web Speech Voice-to-Text */}
+          <div className="w-full md:w-80 space-y-1">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={isVoiceListening ? 'Listening... say a dish name' : 'Search pizza, pakoras, rolls, gol gappay...'}
+                className={`w-full pl-10 ${searchQuery ? 'pr-20' : 'pr-11'} py-2.5 bg-slate-100 dark:bg-[#171a23] border rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all ${
+                  isVoiceListening
+                    ? 'border-amber-400 ring-2 ring-amber-400/30'
+                    : 'border-slate-200 dark:border-white/10'
+                }`}
+              />
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white px-1 cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+                {isVoiceSupported && (
+                  <button
+                    type="button"
+                    onClick={toggleVoiceSearch}
+                    title={isVoiceListening ? 'Stop voice search' : 'Search by voice'}
+                    aria-label={isVoiceListening ? 'Stop voice search' : 'Search menu by voice'}
+                    className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                      isVoiceListening
+                        ? 'bg-red-500 text-white animate-pulse shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-amber-500 hover:bg-amber-500/10'
+                    }`}
+                  >
+                    {isVoiceListening ? (
+                      <MicOff className="w-3.5 h-3.5" />
+                    ) : (
+                      <Mic className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+            {voiceError && (
+              <p className="text-[11px] text-red-500 px-1">{voiceError}</p>
             )}
           </div>
         </div>
@@ -171,10 +218,11 @@ export const MenuSection: React.FC = () => {
                 >
                   {/* Food Image Container */}
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 dark:bg-[#1f232e]">
-                    <img
+                    <ImageWithSkeleton
                       src={item.image}
                       alt={item.name}
-                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                      wrapperClassName="w-full h-full"
                       className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-600 ease-out"
                     />
 
