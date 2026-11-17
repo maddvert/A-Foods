@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { RestaurantProvider } from './context/RestaurantContext';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
@@ -20,10 +21,17 @@ import { CustomerDashboardModal } from './components/CustomerDashboardModal';
 import { FlyToCartOverlay } from './components/FlyToCartOverlay';
 import { FloatingWhatsAppButton } from './components/FloatingWhatsAppButton';
 import { MobileBottomNav } from './components/MobileBottomNav';
+import { SplashScreen } from './components/SplashScreen';
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
   return (
     <RestaurantProvider>
+      <AnimatePresence>
+        {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+      </AnimatePresence>
+
       <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0e1015] text-slate-900 dark:text-[#f3f4f6] flex flex-col font-sans selection:bg-amber-400 selection:text-black transition-colors duration-200 overflow-x-hidden w-full max-w-full">
         {/* Navigation Bar */}
         <Navbar />
