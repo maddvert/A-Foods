@@ -1,0 +1,6 @@
+{
+  "name": "A. FOODS - Fast Food, Pizza & Online Ordering",
+  "description": "Professional restaurant website for A. FOODS featuring fast food, loaded pizza, crispy broast, online ordering with Cash on Delivery, WhatsApp order integration, and live order tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
